@@ -1,8 +1,12 @@
 package ru.javaops.masterjava.matrix;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * gkislin
@@ -15,7 +19,79 @@ public class MatrixUtil {
         final int matrixSize = matrixA.length;
         final int[][] matrixC = new int[matrixSize][matrixSize];
 
+        int countOfExecutors = getCountOfExecutors(executor);
+        int range = matrixSize/countOfExecutors;
+        int start = 0;
+
+        List<Future> futureList = new ArrayList<>();
+
+        while (start<matrixSize){
+            if (matrixSize < start + range){
+                range = matrixSize - start;
+            }
+            futureList.add( executor.submit(new RangeMultiply(start, range, matrixA, matrixB, matrixC)) );
+            start += range;
+
+        }
+
+        for (Future future:futureList) {
+            future.get();
+        }
+
         return matrixC;
+    }
+
+    private static class RangeMultiply implements Runnable{
+        int start, range;
+        int[][] matrixA, matrixB, matrixC;
+
+
+        public RangeMultiply(int start, int range, int[][] matrixA, int[][] matrixB, int[][] matrixC) {
+            this.start = start;
+            this.range = range;
+            this.matrixA = matrixA;
+            this.matrixB = matrixB;
+            this.matrixC = matrixC;
+        }
+
+        @Override
+        public void run() {
+            rangeMultiply(matrixA, matrixB, matrixC, start, range);
+
+        }
+    }
+
+    private static int getCountOfExecutors(ExecutorService executor) {
+        if (executor instanceof ThreadPoolExecutor) {
+            return ((ThreadPoolExecutor)executor).getCorePoolSize();
+        }
+        else {
+            return  1;
+        }
+    }
+
+    public static void rangeMultiply(int[][] matrixA, int[][] matrixB, int[][] matrixC, int start, int range){
+
+        final int matrixSize = matrixA.length;
+        final int thatColumn[] = new int[matrixSize];
+
+        int endSize = start + range;
+
+        for (int j = 0; j < matrixSize; j++) {
+            for (int k = 0; k < matrixSize; k++) {
+                thatColumn[k] = matrixB[k][j];
+            }
+
+            for (int i = start; i < endSize; i++) {
+                int thisRow[] = matrixA[i];
+                int sum = 0;
+                for (int k = 0; k < matrixSize; k++) {
+                    sum += thisRow[k] * thatColumn[k];
+                }
+                matrixC[i][j] = sum;
+            }
+        }
+
     }
 
     // TODO optimize by https://habrahabr.ru/post/114797/
@@ -23,17 +99,39 @@ public class MatrixUtil {
         final int matrixSize = matrixA.length;
         final int[][] matrixC = new int[matrixSize][matrixSize];
 
-        for (int i = 0; i < matrixSize; i++) {
-            for (int j = 0; j < matrixSize; j++) {
-                int sum = 0;
+        //final int[][] matrixBTransp = transposeArray(matrixB, matrixSize);
+
+        final int thatColumn[] = new int[matrixSize];
+
+        try {
+            for (int j = 0; ; j++) {
                 for (int k = 0; k < matrixSize; k++) {
-                    sum += matrixA[i][k] * matrixB[k][j];
+                    thatColumn[k] = matrixB[k][j];
                 }
-                matrixC[i][j] = sum;
+
+                for (int i = 0; i < matrixSize; i++) {
+                    int thisRow[] = matrixA[i];
+                    int sum = 0;
+                    for (int k = 0; k < matrixSize; k++) {
+                        sum += thisRow[k] * thatColumn[k];
+                    }
+                    matrixC[i][j] = sum;
+                }
             }
-        }
+        } catch (IndexOutOfBoundsException ignored) { }
+
         return matrixC;
     }
+
+//    private static int[][] transposeArray(int[][] matrix, int matrixSize) {
+//        final int[][] matrixTransp = new int[matrixSize][matrixSize];
+//        for (int i=0; i<matrixSize; i++){
+//            for (int j=0; j<matrixSize; j++){
+//                matrixTransp[i][j] = matrix[j][i];
+//            }
+//        }
+//        return matrixTransp;
+//    }
 
     public static int[][] create(int size) {
         int[][] matrix = new int[size][size];

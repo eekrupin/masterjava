@@ -3,10 +3,7 @@ package ru.javaops.masterjava.matrix;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 
 /**
  * gkislin
@@ -23,7 +20,7 @@ public class MatrixUtil {
         int range = matrixSize/countOfExecutors;
         int start = 0;
 
-        List<Future> futureList = new ArrayList<>();
+        List<Callable<Void>> tasks = new ArrayList<>();
 
         while (start<matrixSize){
             if (matrixSize < start + range){
@@ -31,7 +28,7 @@ public class MatrixUtil {
             }
             final int begin = start;
             final int endSize = start + range;
-            futureList.add( executor.submit( () -> {
+            tasks.add( () -> {
                 final int thatColumn[] = new int[matrixSize];
                 for (int j = 0; j < matrixSize; j++) {
                     for (int k = 0; k < matrixSize; k++) {
@@ -46,13 +43,12 @@ public class MatrixUtil {
                         matrixC[i][j] = sum;
                     }
                 }
-            }));
+                return null;
+            });
             start += range;
         }
 
-        for (Future future:futureList) {
-            future.get();
-        }
+        executor.invokeAll(tasks);
 
         return matrixC;
     }

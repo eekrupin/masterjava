@@ -29,9 +29,25 @@ public class MatrixUtil {
             if (matrixSize < start + range){
                 range = matrixSize - start;
             }
-            futureList.add( executor.submit(new RangeMultiply(start, range, matrixA, matrixB, matrixC)) );
+            final int begin = start;
+            final int endSize = start + range;
+            futureList.add( executor.submit( () -> {
+                final int thatColumn[] = new int[matrixSize];
+                for (int j = 0; j < matrixSize; j++) {
+                    for (int k = 0; k < matrixSize; k++) {
+                        thatColumn[k] = matrixB[k][j];
+                    }
+                    for (int i = begin; i < endSize; i++) {
+                        int thisRow[] = matrixA[i];
+                        int sum = 0;
+                        for (int k = 0; k < matrixSize; k++) {
+                            sum += thisRow[k] * thatColumn[k];
+                        }
+                        matrixC[i][j] = sum;
+                    }
+                }
+            }));
             start += range;
-
         }
 
         for (Future future:futureList) {
@@ -41,26 +57,6 @@ public class MatrixUtil {
         return matrixC;
     }
 
-    private static class RangeMultiply implements Runnable{
-        int start, range;
-        int[][] matrixA, matrixB, matrixC;
-
-
-        public RangeMultiply(int start, int range, int[][] matrixA, int[][] matrixB, int[][] matrixC) {
-            this.start = start;
-            this.range = range;
-            this.matrixA = matrixA;
-            this.matrixB = matrixB;
-            this.matrixC = matrixC;
-        }
-
-        @Override
-        public void run() {
-            rangeMultiply(matrixA, matrixB, matrixC, start, range);
-
-        }
-    }
-
     private static int getCountOfExecutors(ExecutorService executor) {
         if (executor instanceof ThreadPoolExecutor) {
             return ((ThreadPoolExecutor)executor).getCorePoolSize();
@@ -68,30 +64,6 @@ public class MatrixUtil {
         else {
             return  1;
         }
-    }
-
-    public static void rangeMultiply(int[][] matrixA, int[][] matrixB, int[][] matrixC, int start, int range){
-
-        final int matrixSize = matrixA.length;
-        final int thatColumn[] = new int[matrixSize];
-
-        int endSize = start + range;
-
-        for (int j = 0; j < matrixSize; j++) {
-            for (int k = 0; k < matrixSize; k++) {
-                thatColumn[k] = matrixB[k][j];
-            }
-
-            for (int i = start; i < endSize; i++) {
-                int thisRow[] = matrixA[i];
-                int sum = 0;
-                for (int k = 0; k < matrixSize; k++) {
-                    sum += thisRow[k] * thatColumn[k];
-                }
-                matrixC[i][j] = sum;
-            }
-        }
-
     }
 
     // TODO optimize by https://habrahabr.ru/post/114797/

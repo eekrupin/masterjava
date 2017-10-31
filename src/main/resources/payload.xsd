@@ -53,4 +53,14 @@
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
+
+    <xs:element name="Project" type="projectType"/>
+
+    <xs:complexType name="projectType">
+        <xs:sequence>
+            <xs:element name='description' type='xs:string'/>
+        </xs:sequence>
+        <xs:attribute name='name' type='xs:string' use="required"/>
+    </xs:complexType>
+
 </xs:schema>

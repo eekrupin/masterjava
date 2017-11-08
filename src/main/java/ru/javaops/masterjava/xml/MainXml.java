@@ -19,8 +19,9 @@ public class MainXml {
     }
 
     public static void main(String[] args) throws Exception {
-        printUsersByProject("TopJava");
-        printUsersByProject("MasterJava");
+//        printUsersByProject("TopJava");
+//        printUsersByProject("MasterJava");
+        createHTMLUsersByProject("TopJava");
     }
 
     public static void printUsersByProject(String project) throws Exception {
@@ -30,13 +31,49 @@ public class MainXml {
 
         payload.getUsers().getUser().stream()
                 .filter(user -> user.getGroup().stream()
-                        .filter(group -> project.equals(((ProjectType) ((GroupType) group).getProject()).getName())).count() > 0
+                        .filter(group -> project.equals( ( (ProjectType) ((GroupType) group).getProject() ).getName() )).count() > 0
                 )
-                .forEach(user -> printer.accept(user.getFullName()));
+                .forEach( user -> printer.accept(String.format("%s/%s", user.getFullName(), user.getEmail())) );
 
 //        String strPayload = JAXB_PARSER.marshal(payload);
 //        JAXB_PARSER.validate(strPayload);
 //        System.out.println(strPayload);
+    }
+
+    public static void createHTMLUsersByProject(String project) throws Exception {
+        Consumer<Object> printer = System.out::println;
+        Payload payload = JAXB_PARSER.unmarshal(
+                Resources.getResource("payload.xml").openStream());
+
+        String sep = System.getProperty("line.separator");
+        StringBuilder builder = new StringBuilder();
+        builder.append("<table border = \"0\">");
+        builder.append(sep);
+        builder.append("<tr>")
+            .append("<th>User</th>")
+            .append("<th>Mail</th>")
+            .append("</tr>");
+        builder.append(sep);
+
+        payload.getUsers().getUser().stream()
+                .filter(user -> user.getGroup().stream()
+                        .filter(group -> project.equals( ( (ProjectType) ((GroupType) group).getProject() ).getName() )).count() > 0
+                )
+                .forEach( user -> builder.append("<tr>")
+                                .append("<td>")
+                                .append(user.getFullName())
+                                .append("</td>")
+                                .append("<td>")
+                                .append(user.getEmail())
+                                .append("</td>")
+                                .append("</tr>")
+                         );
+
+        builder.append(sep);
+        builder.append("</table>");
+
+        printer.accept(builder.toString());
+
     }
 
 }

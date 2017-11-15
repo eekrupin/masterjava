@@ -11,7 +11,7 @@ public class MainMatrix {
     private final static ExecutorService executor = Executors.newFixedThreadPool(MainMatrix.THREAD_NUMBER);
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        final int[][] matrixA = MatrixUtil.create(MATRIX_SIZE);
+            final int[][] matrixA = MatrixUtil.create(MATRIX_SIZE);
         final int[][] matrixB = MatrixUtil.create(MATRIX_SIZE);
 
         double singleThreadSum = 0.;

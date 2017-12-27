@@ -32,7 +32,7 @@ public class JaxbUnmarshaller {
         return unmarshal(new StringReader(str));
     }
 
-    public <T> T unmarshal(XMLStreamReader reader, Class<T> elementClass) throws JAXBException {
+    public synchronized <T> T unmarshal(XMLStreamReader reader, Class<T> elementClass) throws JAXBException {
         return unmarshaller.unmarshal(reader, elementClass).getValue();
     }
 }
